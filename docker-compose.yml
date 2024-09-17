@@ -2,14 +2,12 @@ version: '3'
 
 networks:
     webapp:
-
-
 services:
     nginx:
         image: nginx:stable-alpine
         container_name: ${APP_NAME}_nginx
         ports:
-            - "8003:80"
+            - "8001:80"
         links:
             - php
         volumes:
@@ -18,7 +16,7 @@ services:
             - ./docker/logs/nginx:/var/logs/nginx:rw
         depends_on:
             - php
-            - postgres
+            - database
         networks:
             - webapp
     php:
@@ -29,22 +27,25 @@ services:
         volumes:
             - ./:/var/www/html
         ports:
-            - "9003:9000"
+            - "9002:9000"
         networks:
             - webapp
 
-    postgres:
-        image: postgres:12.3-alpine
-        container_name: ${APP_NAME}_postgres
+    database:
+        image: mariadb
+        container_name: ${APP_NAME}_mariadb
         restart: unless-stopped
         ports:
-            - "5433:5432"
+            - "3306:3306"
         volumes:
-            - ./docker/postgres:/var/lib/postgresql/data
+            - mariadbdata:/var/lib/mysql
+            - ./docker-files/mysql/my.cnf:/etc/mysql/my.cnf
         environment:
-            POSTGRES_USER: ${DB_USERNAME}
-            POSTGRES_PASSWORD: ${DB_PASSWORD}
-            POSTGRES_DB: ${DB_DATABASE}
-            POSTGRES_HOST_AUTH_METHOD: "trust"
+            MYSQL_DATABASE: laravel
+            MYSQL_ROOT_PASSWORD: 123456
         networks:
             - webapp
+# Volumes
+volumes:
+    mariadbdata:
+        driver: local
